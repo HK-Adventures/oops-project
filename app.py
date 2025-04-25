@@ -5,11 +5,8 @@ from fitness_tracker import FitnessTracker, Workout, Goal
 
 class FitnessApp:
     def __init__(self):
+        # Initialize tracker without session state
         self.tracker = FitnessTracker()
-        
-        # Initialize session state for persistence
-        if 'tracker' not in st.session_state:
-            st.session_state.tracker = self.tracker
         
     def run(self):
         st.title("🏃‍♂️ Fitness Tracker")
@@ -37,22 +34,20 @@ class FitnessApp:
         with col2:
             end_date = st.date_input("End Date", date.today())
         
-        tracker = st.session_state.tracker
-        
         # Summary metrics
         col1, col2, col3 = st.columns(3)
-        workouts = tracker.get_workouts_by_date_range(start_date, end_date)
+        workouts = self.tracker.get_workouts_by_date_range(start_date, end_date)
         
         with col1:
             st.metric("Total Workouts", len(workouts))
         with col2:
-            st.metric("Total Minutes", tracker.get_total_duration(start_date, end_date))
+            st.metric("Total Minutes", self.tracker.get_total_duration(start_date, end_date))
         with col3:
-            st.metric("Calories Burned", tracker.get_total_calories_burned(start_date, end_date))
+            st.metric("Calories Burned", self.tracker.get_total_calories_burned(start_date, end_date))
         
         # Workout history
         st.subheader("Recent Workouts")
-        workout_df = tracker.get_workout_summary()
+        workout_df = self.tracker.get_workout_summary()
         if not workout_df.empty:
             st.dataframe(workout_df, use_container_width=True)
             
@@ -64,7 +59,7 @@ class FitnessApp:
         
         # Goals progress
         st.subheader("Goals Progress")
-        goals_df = tracker.get_goals_summary()
+        goals_df = self.tracker.get_goals_summary()
         if not goals_df.empty:
             for _, goal in goals_df.iterrows():
                 goal_obj = Goal(
@@ -74,7 +69,7 @@ class FitnessApp:
                     end_date=goal['End Date'],
                     description=goal['Description']
                 )
-                progress = tracker.calculate_goal_progress(goal_obj)
+                progress = self.tracker.calculate_goal_progress(goal_obj)
                 st.write(f"**{goal['Description']}**")
                 st.progress(progress / 100)
                 st.write(f"Progress: {progress:.1f}%")
@@ -104,7 +99,7 @@ class FitnessApp:
                     calories_burned=calories,
                     notes=notes
                 )
-                st.session_state.tracker.add_workout(workout)
+                self.tracker.add_workout(workout)
                 st.success("Workout logged successfully!")
     
     def set_goals(self):
@@ -140,7 +135,7 @@ class FitnessApp:
                         end_date=end_date,
                         description=description
                     )
-                    st.session_state.tracker.add_goal(goal)
+                    self.tracker.add_goal(goal)
                     st.success("Goal set successfully!")
 
 if __name__ == "__main__":
